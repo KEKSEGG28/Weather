@@ -3,11 +3,11 @@ const btnNode = document.querySelector(".findbtn");
 const divFormNode = document.querySelector(".form");
 const divTempNode = document.querySelector(".temp");
 const divErrorNode = document.querySelector(".error");
-const API_KEY = "fe194bf539f66e68b10b3ae92c0020f3";
-const API_KEY_IP = "at_OxcOgYPTfnYviSSxL9VwSpnw0t8rj";
+const API_KEY = "fe194bf539f66e68b10b3ae92c0020f3"; /// получаем ключ на сайте погоды
+const API_KEY_IP = "at_OxcOgYPTfnYviSSxL9VwSpnw0t8rj"; /// получаем ключ на сайте ип
 
-const API_URL = "https://api.openweathermap.org/data/2.5/weather?";
-// let inputValue = "";
+const API_URL = "https://api.openweathermap.org/data/2.5/weather?"; ///задаем АПИшку
+/// функция запроса погоды через инпут
 const getData = async (url, inputValue) => {
   try {
     const res = await fetch(
@@ -22,7 +22,7 @@ const getData = async (url, inputValue) => {
     errorRender(error.message);
   }
 };
-
+///функция отрисовки погоды через инпут
 let data = {};
 async function btnHandler(e) {
   e.preventDefault();
@@ -38,7 +38,7 @@ async function btnHandler(e) {
 
     displayn();
     const tempBtnNode = divTempNode.querySelector(".temp-btn");
-    tempBtnNode.addEventListener("click", () => tempBtn());
+    tempBtnNode.addEventListener("click", () => displayn());
   } catch (e) {
     let error = new Error(
       "Такого города не существует дружок, напиши конкретный Город"
@@ -47,31 +47,20 @@ async function btnHandler(e) {
   }
 }
 
-function tempBtn() {
-  displayn();
-}
-function displayn() {
-  divFormNode.classList.toggle("displayn");
-  divTempNode.classList.toggle("displayn");
-}
+///функция запроса погоды по координатам
+const getCord = async (url, crd) => {
+  const res = await fetch(
+    url +
+      `lat=${crd.latitude}&lon=${crd.longitude}&lang=ru&appid=${API_KEY}&units=metric`
+  );
 
-const options = {
-  enableHighAccuracy: true,
-  timeout: 5000,
-  maximumAge: 0,
+  return res.json();
 };
-
+///функция отрисовки по координатам
 async function success(pos) {
   let crd = pos.coords;
-  const getData = async (url) => {
-    const res = await fetch(
-      url +
-        `lat=${crd.latitude}&lon=${crd.longitude}&lang=ru&appid=${API_KEY}&units=metric`
-    );
 
-    return res.json();
-  };
-  const data = await getData(API_URL);
+  const data = await getCord(API_URL, crd);
 
   divTempNode.innerHTML = `<h2 class="temp-h2">${data.main.temp}°C</h2>
                           <p class="temp-p">${data.weather[0].description} в ${data.name}</p>
@@ -79,60 +68,62 @@ async function success(pos) {
 
   displayn();
   const tempBtnNode = divTempNode.querySelector(".temp-btn");
-  tempBtnNode.addEventListener("click", () => tempBtn());
+  tempBtnNode.addEventListener("click", () => displayn());
 }
+///функция запроса ип
+const getIp = async () => {
+  try {
+    const res = await fetch(
+      `https://geo.ipify.org/api/v2/country,city?apiKey=${API_KEY_IP}`
+    );
+    return res.json();
+  } catch {
+    let error = new Error("Повезло, по IP не вычислил");
+    errorRender(error.message);
+  }
+};
+///функция запроса погода по ип
+const getIpCord = async (url, dataIP) => {
+  const res = await fetch(
+    url +
+      `lat=${dataIP.location.lat}&lon=${dataIP.location.lng}&lang=ru&appid=${API_KEY}&units=metric`
+  );
 
+  return res.json();
+};
+///функция отрисовки по ип
 async function error(err) {
-  const getIp = async () => {
-    try {
-      const res = await fetch(
-        `https://geo.ipify.org/api/v2/country,city?apiKey=${API_KEY_IP}`
-      );
-      return res.json();
-    } catch {
-      let error = new Error("Повезло, по IP не вычеслил");
-      errorRender(error.message);
-    }
-  };
   const dataIP = await getIp();
-  const getData = async (url) => {
-    const res = await fetch(
-      url +
-        `lat=${dataIP.location.lat}&lon=${dataIP.location.lng}&lang=ru&appid=${API_KEY}&units=metric`
-    );
 
-    return res.json();
-  };
-  const data = await getData(API_URL);
+  const data = await getIpCord(API_URL, dataIP);
   divTempNode.innerHTML = `<h2 class="temp-h2">${data.main.temp}°C</h2>
                           <p class="temp-p">${data.weather[0].description} в ${data.name}</p>
                           <button class="temp-btn">Сменить город</button>`;
 
   displayn();
   const tempBtnNode = divTempNode.querySelector(".temp-btn");
-  tempBtnNode.addEventListener("click", () => tempBtn());
+  tempBtnNode.addEventListener("click", () => displayn());
 }
-try {
-  if (navigator.geolocation.getCurrentPosition(success, error, options));
-} catch {
-  let error = new Error("Повезло, координаты не нашлись, живи");
-  errorRender(error.message);
-}
-
+///геолокация
+navigator.geolocation.getCurrentPosition(success, error);
+///функция смены классов на ошибку
 function errorOn() {
   divFormNode.classList.toggle("displayn");
   divErrorNode.classList.toggle("displayn");
 }
-function errorOnOff() {
-  errorOn();
+/// функция смены классов на коорды
+function displayn() {
+  divFormNode.classList.toggle("displayn");
+  divTempNode.classList.toggle("displayn");
 }
+///функция отрисовки ошибок
 function errorRender(message) {
   errorOn();
   divErrorNode.innerHTML = `<h2 class="errortitle">Ну и что ты наделал? ГАЛЯ ОТМЕНА </h2>
           <p class="errorsubtitle">Ошибка: ${message}</p>
           <button class="errorbtn">Еще разок</button>`;
   const errorBtnNode = divErrorNode.querySelector(".errorbtn");
-  errorBtnNode.addEventListener("click", () => errorOnOff());
+  errorBtnNode.addEventListener("click", () => errorOn());
 }
 
 btnNode.addEventListener("click", btnHandler);

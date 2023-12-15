@@ -98,6 +98,7 @@ form {
   font-style: normal;
   font-weight: 400;
   line-height: 36px; /* 150% */
+  text-align: center;
 }
 .temp-btn {
   margin: 37px auto 0;
